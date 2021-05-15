@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -21,7 +20,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
 
@@ -31,23 +30,28 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  List data;
+  late List<dynamic> data = [];
 
   // Function to get the JSON data
-  Future<String> getJSONData() async {
-    var response = await http.get(
-        // Encode the url
-        Uri.encodeFull("https://unsplash.com/napi/photos/Q14J2k8VE3U/related"),
-        // Only accept JSON response
-        headers: {"Accept": "application/json"}
-    );
+  void getJSONData() async {
+    try {
+      //https://unsplash.com/napi/photos/Q14J2k8VE3U/related
+      //https://gist.githubusercontent.com/winweb/1117ee33bcd6ad8378a54edf50f45f35/raw/7cc4aad697a5c13e5d5808784662cf13ecb4bb84/sample.json
+      final response = await http.get(Uri.https("gist.githubusercontent.com","/winweb/1117ee33bcd6ad8378a54edf50f45f35/raw/7cc4aad697a5c13e5d5808784662cf13ecb4bb84/sample.json"));
 
-    setState(() {
-      // Get the JSON data
-      data = json.decode(response.body)['results'];
-    });
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        data = json.decode(response.body)['results'];
 
-    return "Successfull";
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load album');
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 
   @override
@@ -63,6 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildListView() {
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
+      // ignore: unnecessary_null_comparison
       itemCount: data == null ? 0 : data.length,
       itemBuilder: (context, index) {
         return _buildImageColumn(data[index]);
@@ -98,6 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
       subtitle: Text("Likes: " + item['likes'].toString()),
     );
   }
+
   @override
   void initState() {
     super.initState();
@@ -105,4 +111,3 @@ class _MyHomePageState extends State<MyHomePage> {
     this.getJSONData();
   }
 }
-
